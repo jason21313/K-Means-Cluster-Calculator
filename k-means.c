@@ -1,9 +1,12 @@
 # include <stdio.h>
 # include <stdlib.h>
+# include <string.h>
 # include <time.h>
 # include <math.h>
 # include <stddef.h>
 # include <stdbool.h>
+# include "csv_reader.h"
+
 
 //example data set
 int dat[] = {6, 8, 3, 9, 1};
@@ -130,10 +133,23 @@ int* run_d(int*data, int k, int size){
  * Main function to execute the k-means clustering algorithm.
  */
 int main() {
+    printf("Enter a filename: ");
+    char* filename = malloc(50 *sizeof(char));
+    fgets(filename,50,stdin);
+    filename[strlen(filename)-1]='\0';
+
+    HashMap* dataMap = read_file(filename, 1);
+
     printf("Enter the number of clusters (k): ");
     int k = 3;
     scanf("%d", &k);
-    int size = sizeof(dat) / sizeof(dat[0]);
+    int size = dataMap->size;
+    printf("%d",size);
+
+    free(filename);
+    free(dataMap->entries);
+    free(dataMap);
+    return 1;
     if(k <= 0 || k > size) {
         printf("Invalid number of clusters. Please enter a value between 1 and %d.\n", size);
         return 1;
