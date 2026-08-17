@@ -13,15 +13,11 @@ int dat[] = {6, 8, 3, 9, 1};
 
 /*
  * Function to sort an array of integers in ascending order.
- * @param arr: Pointer to the array to be sorted.
- * @param size: The number of elements in the array.
- * @return: Pointer to the newly allocated sorted array.
 */
-int* sort(int* arr, int size) {
-    // Implementation for sorting
-    int* sorted_arr = malloc(size * sizeof(int));
+int* sort_arr(int* arr, int size){
+    int* sorted_arr = malloc(sizeof(int));
     for(int i = 0; i < size; i++) {
-        sorted_arr[i] = arr[i];
+        sorted_arr[i]=arr[i];
     }
     for(int i = 0; i < size - 1; i++) {
         for(int j = 0; j < size - i - 1; j++) {
@@ -33,6 +29,24 @@ int* sort(int* arr, int size) {
         }
     }
     return sorted_arr;
+}
+
+int* sort_map(HashMap* map, char** keys){
+    int* sorted_data = malloc(sizeof(int));
+    for(int i = 0; i < map->size; i++) {
+        printf("%s\n",keys[i]);
+        sorted_data[i]=get(map,keys[i]);
+    }
+    for(int i = 0; i < map->size - 1; i++) {
+        for(int j = 0; j < map->size - i - 1; j++) {
+            if(sorted_data[j] > sorted_data[j + 1]) {
+                int temp = sorted_data[j];
+                sorted_data[j] = sorted_data[j + 1];
+                sorted_data[j + 1] = temp;
+            }
+        }
+    }
+    return sorted_data;
 }
 
 /*
@@ -86,7 +100,6 @@ int* run_d(int*data, int k, int size){
         cen_arrs[i] = NULL;
     }
 
-
     //loop through each data point to find the closest centroid and assign the data point to that centroid's array
     for(int i=0; i<size; i++){
         //create array to track distances from each centroid
@@ -96,7 +109,7 @@ int* run_d(int*data, int k, int size){
             point_distances[j] = abs(data[i]-cen_locations[j]);
         }
         //sort to find the closest centroid
-        int* sorted_distances = sort(point_distances, k);
+        int* sorted_distances = sort_arr(data,size);
         //insert into the array of the closest centroid
         for(int l=0; l<k; l++){
             if(point_distances[l] == sorted_distances[0]){
@@ -138,18 +151,22 @@ int main() {
     fgets(filename,50,stdin);
     filename[strlen(filename)-1]='\0';
 
-    HashMap* dataMap = read_file(filename, 1);
+    Info* info = read_file(filename, 1);
+    HashMap* dataMap = info->map;
+    char** keys = info->keys;
+
+    int* sorted_data = sort_map(dataMap,keys);
+    for(int i = 0;i<dataMap->size;i++){
+        printf("%d\n",sorted_data[i]);
+    }
+
 
     printf("Enter the number of clusters (k): ");
     int k = 3;
     scanf("%d", &k);
     int size = dataMap->size;
-    printf("%d",size);
+    printf("%d\n",size);
 
-    free(filename);
-    free(dataMap->entries);
-    free(dataMap);
-    return 1;
     if(k <= 0 || k > size) {
         printf("Invalid number of clusters. Please enter a value between 1 and %d.\n", size);
         return 1;
@@ -158,7 +175,7 @@ int main() {
         return 0;
     }else{
         int *best = NULL;
-        int *sorted_data = sort(dat, size);
+        // int *sorted_data = NULL;
         printf("Finding best Clustering for data with %d clusters\n", k);
         for(int i = 0; i < 1; i++) {
             int *result = run_d(sorted_data, k, size);
@@ -186,5 +203,12 @@ int main() {
             return 0;
         }
     }
+
+    free(info);
+    free(keys);
+    free(filename);
+    free(dataMap->entries);
+    free(dataMap);
+
     return 0;
 }

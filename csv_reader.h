@@ -17,8 +17,13 @@ typedef struct {
     size_t capacity;
 }HashMap;
 
+typedef struct {
+    HashMap* map;
+    char** keys;
+} Info;
+
 int get(HashMap* map, const char* key);
 
-HashMap* read_file(const char* filename, int dim);
+Info* read_file(const char* filename, int dim);
 
 #endif

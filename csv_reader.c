@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
 #include "csv_reader.h"
 
 unsigned int hash(const char* key, size_t capacity) {
@@ -44,19 +45,24 @@ int get(HashMap* map, const char* key){
     return -1; // Key not found
 }
 
+int count_rows(const char* filename){
+    int rows=0;
+    FILE *file = fopen(filename,"r");
+    char buffer[1024]={0};
+    while(fgets(buffer,sizeof(buffer),file)!=NULL){
+        rows++;
+    }
+    fclose(file);
+    return rows;
+}
 
-
-HashMap* read_file(const char* filename, int dim) {
-    // if(dim==1){
-    //     //create a dict with id and int
-    // }else if(dim==2){
-    //     //create a dict with id and tuple of 2 ints
-    // }else if(dim==3){
-    //     //create a dict with id and tuple of 3 ints
-    // }else{
-    //     return NULL;
-    // }
+Info* read_file(const char* filename, int dim) {
     HashMap* map = malloc(sizeof(HashMap));
+    int rows = count_rows(filename);
+    if(rows<=0){
+        return NULL;
+    }
+    char** keys = malloc(sizeof(char*)*rows);
     map->capacity = 100; // Initial capacity
     map->size = 0;
     map->entries = calloc(map->capacity, sizeof(HashEntry));
@@ -74,27 +80,30 @@ HashMap* read_file(const char* filename, int dim) {
         buffer[strcspn(buffer, "\n")] = 0; // Remove newline character
         char* token = strtok(buffer, ",");
         while(token != NULL) {
-            if(tracker==0){
+            if(tracker%2==0){
                 key = token;
+                keys[tracker/2]=strdup(key);
                 printf("Key: %s\n", key);
                 token = strtok(NULL, ",");
                 tracker++;
             }else{
                 int value = atoi(token);
                 printf("Value: %d\n", value);
-                insert(map, key, value);
+                insert(map, keys[(tracker-1)/2], value);
                 printf("Inserted: %s -> %d\n", key, get(map, key));
-                tracker=0;
+                tracker++;
                 token = strtok(NULL, ",");
             }
         }
     }
     fclose(file);
-    return map;
+    Info* info = malloc(sizeof(Info));
+    info->keys=keys;
+    info->map=map;
+    return info;
 }
 
 int main_csv(){
-    HashMap* map = read_file("test.csv",1);
     printf("1");
     return 1;
 }
