@@ -6,6 +6,10 @@
 #ifndef CSV_READER_H
 #define CSV_READER_H
 
+/*
+ * Header file for the csv reader to allow for reference in other files
+*/
+
 typedef struct {
     char* key;
     int value;
