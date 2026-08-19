@@ -12,13 +12,14 @@
 
 typedef struct {
     char* key;
-    int value;
+    int* values;
 }HashEntry;
 
 typedef struct {
     HashEntry* entries;
     size_t size;
     size_t capacity;
+    int dim;
 }HashMap;
 
 typedef struct {
@@ -26,7 +27,7 @@ typedef struct {
     char** keys;
 } Info;
 
-int get(HashMap* map, const char* key);
+int* get(HashMap* map, const char* key);
 
 Info* read_file(const char* filename, int dim);
 

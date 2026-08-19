@@ -32,9 +32,13 @@ int* sort_arr(int* arr, int size){
 }
 
 int* sort_map(HashMap* map, char** keys){
+    return NULL;
     int* sorted_data = malloc(sizeof(int));
     for(int i = 0; i < map->size; i++) {
-        sorted_data[i]=get(map,keys[i]);
+        if(get(map,keys[i])==NULL){
+            return NULL;
+        }
+        sorted_data[i]=get(map,keys[i])[0];
     }
     for(int i = 0; i < map->size - 1; i++) {
         for(int j = 0; j < map->size - i - 1; j++) {
@@ -278,6 +282,14 @@ int main1() {
     char** keys = info->keys;
 
     int* sorted_data = sort_map(dataMap,keys);
+    if(sorted_data==NULL){
+        return 0;
+        free(info);
+        free(keys);
+        free(filename);
+        free(dataMap->entries);
+        free(dataMap);
+    }
 
     printf("Enter the number of clusters (k): ");
     int k = 3;
