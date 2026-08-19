@@ -52,30 +52,33 @@ int* sort_map(HashMap* map, char** keys){
     return sorted_data;
 }
 
-float* run_d2(int*data_x, int*data_y,int k,int size){
+float* run_d2(int*data_x, int*data_y,int k,int size, int dim,int** data){
     int** cen_locations = malloc(k * sizeof(int*));
     int*** cen_arrs = malloc(k * sizeof(int**));
     for(int i=0;i<k;i++){
-        cen_locations[i]=malloc(2*sizeof(int));
-        cen_arrs[i]=calloc(2,sizeof(int*));
+        cen_locations[i]=malloc(dim*sizeof(int));
+        cen_arrs[i]=calloc(dim,sizeof(int*));
     }
     int* cen_sizes = calloc(k , sizeof(int));
 
     for(int i = 0; i < k; i++) {
         if(i==0){
-            cen_locations[i][0] = (rand() % (data_x[size-1]-data_x[0]+1)) + data_x[0];
-            cen_locations[i][1] = (rand() % (data_y[size-1]-data_y[0]+1)) + data_y[0];
+            for(int d=0;d<dim;d++){
+                cen_locations[i][d] = (rand() % (data[d][size-1]-data[d][0]+1)) + data[d][0];
+            }
         }else{
             bool unique = false;
             while(!unique) {
-                cen_locations[i][0] = (rand() % (data_x[size-1]-data_x[0]+1)) + data_x[0];
-                cen_locations[i][1] = (rand() % (data_y[size-1]-data_y[0]+1)) + data_y[0];
+                for(int d=0;d<dim;d++){
+                    cen_locations[i][d] = (rand() % (data[d][size-1]-data[d][0]+1)) + data[d][0];
+                }
                 for(int j = 0; j < i; j++) {
-                    if(cen_locations[i][0] == cen_locations[j][0] || cen_locations[i][1]==cen_locations[j][1]) {
-                        unique = false;
-                    } else {
-                        unique = true;
-                        break;
+                    for(int d=0;d<dim;d++){
+                        if(cen_locations[i][d]==cen_locations[j][d]){
+                            unique=false;
+                        }else{
+                            unique=true;
+                        }
                     }
                 }
             }
@@ -87,32 +90,42 @@ float* run_d2(int*data_x, int*data_y,int k,int size){
         int* point_distances = malloc(k * sizeof(float));
         //calculate distance from each centroid
         for(int j=0; j<k; j++){
-            point_distances[j] = abs(sqrt(pow(data_x[i]-cen_locations[j][1],2)+pow(data_y[i]-cen_locations[j][1],2)));
+            int temp_distance = 0;
+            for(int d=0;d<dim;d++){
+                temp_distance+=pow(data[d][i]-cen_locations[j][d],2);
+            }
+            point_distances[j]= abs(sqrt(temp_distance));
         }
         //sort to find the closest centroid
         int* sorted_distances = sort_arr(point_distances,k);
         //insert into the array of the closest centroid
         for(int l=0; l<k; l++){
             if(point_distances[l] == sorted_distances[0]){
-                int* temp_x = realloc(cen_arrs[l][0],(cen_sizes[l]+1)*sizeof(int));
-                int* temp_y = realloc(cen_arrs[l][1], (cen_sizes[l]+1) * sizeof(int));
-                if(temp_x==NULL || temp_y==NULL){
-                    free(cen_sizes);
-                    for(int i=0;i<k;i++){
-                        free(cen_locations[i]);
-                        free(cen_arrs[i][0]);
-                        free(cen_arrs[i][1]);
-                        free(cen_arrs[i]);
+                int** temp = calloc(dim,sizeof(int*));
+                for(int d=0;d<dim;d++){
+                    temp[d]=realloc(cen_arrs[l][d],(cen_sizes[l]+1)*sizeof(int));
+                    if(temp[d]==NULL){
+                        free(cen_sizes);
+                        for(int i=0;i<k;i++){
+                            free(cen_locations[i]);
+                            free(cen_arrs[i][0]);
+                            free(cen_arrs[i][1]);
+                            free(cen_arrs[i]);
+                        }
+                        for(int j=0;j<=d;j++){
+                            free(temp[j]);
+                        }
+                        free(temp);
+                        free(cen_locations);
+                        free(cen_arrs);
+                        printf("error");
+                        return NULL;
                     }
-                    free(cen_locations);
-                    free(cen_arrs);
-                    printf("error");
-                    return NULL;
                 }
-                cen_arrs[l][0] = temp_x;
-                cen_arrs[l][1] = temp_y;
-                cen_arrs[l][0][cen_sizes[l]] = data_x[i];
-                cen_arrs[l][1][cen_sizes[l]] = data_y[i];
+                for(int d=0;d<dim;d++){
+                    cen_arrs[l][d]=temp[d];
+                    cen_arrs[l][d][cen_sizes[l]]=data[d][i];
+                }
                 cen_sizes[l]++;
             }
         }
@@ -121,40 +134,50 @@ float* run_d2(int*data_x, int*data_y,int k,int size){
     }
 
 
-    float* return_val = malloc((2*k+1) * sizeof(float));
+    float* return_val = malloc((dim*k+1) * sizeof(float));
     float* final_cen_locations_x = malloc(k*sizeof(float));
     float* final_cen_locations_y = malloc(k*sizeof(float));
+    float** final_locations = calloc(k,sizeof(float*));
     for(int i=0;i<k;i++){
-        float new_location_x = 0;
-        float new_location_y = 0;
+        final_locations[i]=calloc(dim,sizeof(float));
+        float* new_locations=calloc(dim,sizeof(float));
         for(int j=0;j<cen_sizes[i];j++){
-            new_location_x+=cen_arrs[i][0][j];
-            new_location_y+=cen_arrs[i][1][j];
+            for(int d=0;d<dim;d++){
+                new_locations[d]+=cen_arrs[i][d][j];
+            }
         }
-        final_cen_locations_x[i]=new_location_x/cen_sizes[i];
-        final_cen_locations_y[i]=new_location_y/cen_sizes[i];
-        return_val[2*i+1]=final_cen_locations_x[i];
-        return_val[2*i+2]=final_cen_locations_y[i];
+        for(int d=0;d<dim;d++){
+            final_locations[i][d]=new_locations[d]/cen_sizes[i];
+            return_val[dim*i+(d+1)]=final_locations[i][d];
+        }
+        free(new_locations);
     }
 
-    float variance_x = 0;
-    float variance_y = 0;
+    float* variances = calloc(dim,sizeof(float));
     float total_variance = 0;
     for(int i=0;i<k;i++){
-        float temp_var_x = 0;
-        float temp_var_y = 0;
+        float* temp_variances = calloc(dim,sizeof(float));
         for(int j=0;j<cen_sizes[i];j++){
-            temp_var_x+=pow(cen_arrs[i][0][j]-final_cen_locations_x[i],2);
-            temp_var_y+=pow(cen_arrs[i][1][j]-final_cen_locations_y[i],2);
+            for(int d=0;d<dim;d++){
+                temp_variances[d]+=pow(cen_arrs[i][d][j]-final_locations[i][d],2);
+            }
         }
-        variance_x+=temp_var_x;
-        variance_y+=temp_var_y;
+        for(int d=0; d<dim;d++){
+            variances[d]+=temp_variances[d];
+        }
+        free(temp_variances);
     }
-    total_variance = variance_x + variance_y;
+    for(int d=0;d<dim;d++){
+        total_variance+=variances[d];
+    }
     return_val[0] = total_variance;
 
     free(final_cen_locations_x);
     free(final_cen_locations_y);
+    for(int j=0;j<dim;j++){
+        free(final_locations[j]);
+    }
+    free(final_locations);
     free(cen_sizes);
     for(int i=0;i<k;i++){
         free(cen_locations[i]);
@@ -164,6 +187,7 @@ float* run_d2(int*data_x, int*data_y,int k,int size){
     }
     free(cen_locations);
     free(cen_arrs);
+    free(variances);
 
     return return_val;
 }
@@ -345,11 +369,15 @@ int main(){
     int k = 3;
     scanf("%d", &k);
     int size = 5;
+    int dim =2;
     bool zscore = false;
+    int** dat = calloc(dim,sizeof(int*));
     int datx[5] = {3,6,1,8,9};
     int* sort_x = sort_arr(datx,size);
     int daty[5] = {5,2,4,7,10};
     int* sort_y = sort_arr(daty,size);
+    dat[0]=sort_x;
+    dat[1]=sort_y;
 
     if(k <= 0 || k > size) {
         printf("Invalid number of clusters. Please enter a value between 1 and %d.\n", size);
@@ -359,7 +387,7 @@ int main(){
         float* best = NULL;
         printf("Finding best Clustering for data with %d clusters\n", k);
         for(int i=0;i<10;i++){
-            float* result = run_d2(sort_x,sort_y,k,size);
+            float* result = run_d2(sort_x,sort_y,k,size,dim,dat);
             if(i==0){
                 best = result;
             }else if (result[0] != -1) {
