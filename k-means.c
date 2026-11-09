@@ -248,11 +248,14 @@ int main(){
     scanf("%d", &k);
 
     bool zscore = false;
+    int result = 0;
 
     if(k <= 0 || k > size) {
         printf("Invalid number of clusters. Please enter a value between 1 and %d.\n", size);
+        result = 1;
     }else if(k==size){
         printf("Variance = 0 since k = Size of data\n");
+        result = 1;
     }else{
         float* best = NULL;
         printf("Finding best Clustering for data with %d clusters\n", k);
@@ -270,8 +273,38 @@ int main(){
             }
         }
         if(best[0]==-1){
+            result = 1;
             printf("One of the clusters has no data points assigned to it. Please try again.\n");
         }else{
+            FILE * fd = fopen("output.txt","w");
+            if(fd==NULL){
+                printf("Error opening output.txt for writing\n");
+                result = 1;
+            }else{
+                fprintf(fd,"%d %f %d %d\n",dim,best[0],k,0);
+                for(int i=1;i<=k;i++){
+                    for(int d=0;d<dim;d++){
+                        fprintf(fd,"%f",best[dim*(i-1)+(d+1)]);
+                        if(dim!=1){
+                            fprintf(fd," ");
+                        }
+                    }
+                    fprintf(fd,"\n");
+                }
+                for(int i=0;i<size;i++){
+                    for(int d=0;d<dim;d++){
+                        fprintf(fd,"%d",data[d][i]);
+                        if(dim!=1){
+                            fprintf(fd," ");
+                        }
+                    }
+                if(i!=size-1){
+                        fprintf(fd,"\n");
+                    }
+                }
+                fclose(fd);
+            }
+
             printf("\nResult: Variance = %f", best[0]);
             for(int i = 1; i <= k; i++) {
                 printf(", Centroid%d = (", i);
@@ -300,4 +333,5 @@ int main(){
     free(info->map);
     free(info->keys);
     free(info);
+    return result;
 }

@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import subprocess, sys
 from dataclasses import dataclass, field
 
 # Fixed colour order: cluster 1 is always blue, cluster 2 always orange, etc.
@@ -114,8 +115,13 @@ def plot_data(data: Data):
     plt.show()
 
 def main():
-    filename = input("Please enter the file name: ")
-    data = process_file(filename)
+    build = subprocess.run(["gcc","k-means.c","csv_reader.c","-o","k-means.exe","-lm"])
+    if build.returncode !=0:
+        sys.exit("compilation failed")
+    result = subprocess.run(["k-means.exe"])
+    if result.returncode != 0:
+        sys.exit("k-means failed, nothing to graph")
+    data = process_file("output.txt")
     print(data)
     plot_data(data)
 
